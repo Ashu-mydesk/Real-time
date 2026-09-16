@@ -8,6 +8,7 @@ DECLARE
     END_TIME TIMESTAMP;
     SOURCE_TABLE_NAME VARCHAR(100);
     TARGET_TABLE_NAME VARCHAR(100);
+    Q_DELETE VARCHAR; -- Added explicit declaration here
     /* DIM CUSTOMER STORED PROCEDURE */
     /* CREATED BY : ASHISH */
     /* CREATED DATE : 16-09-2026 */
@@ -17,11 +18,11 @@ BEGIN
     SOURCE_TABLE_NAME := 'SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCL.CUSTOMER';
     TARGET_TABLE_NAME := 'ASHISH.PUBLIC.STAGE_CUSTOMER';
 
-    /* truncate the table before inserts the data into table */
-    LET Q_DELETE := 'TRUNCATE TABLE ' || :TARGET_TABLE_NAME;
-    EXECUTE IMMEDIATE Q_DELETE;
+    /* Truncate target table before load */
+    Q_DELETE := 'TRUNCATE TABLE ' || TARGET_TABLE_NAME;
+    EXECUTE IMMEDIATE :Q_DELETE;
 
-    /* Insert the data into table from the source */
+    /* Insert data from source */
     INSERT INTO ASHISH.PUBLIC.STAGE_CUSTOMER (
         CUSTOMER_SK,
         CUSTOMER_ID,
@@ -47,7 +48,7 @@ BEGIN
     SELECT 
         C_CUSTOMER_SK           AS CUSTOMER_SK,
         C_CUSTOMER_ID           AS CUSTOMER_ID,
-        C_CURRENT_CDEMO_SK      AS CUSTOMER_CDEMO_SK,
+        C_CURRENT_CDEMO_SK      AS CURRENT_CDEMO_SK,
         C_CURRENT_HDEMO_SK      AS CURRENT_HDEMO_SK,
         C_CURRENT_ADDR_SK       AS CURRENT_ADDR_SK,
         C_FIRST_SHIPTO_DATE_SK  AS FIRST_SHIPTO_DATE_SK,
@@ -65,10 +66,15 @@ BEGIN
         C_LAST_REVIEW_DATE      AS LAST_REVIEW_DATE,
         :START_TIME             AS LOAD_START_TIME,
         CURRENT_TIMESTAMP()     AS LOAD_END_TIME
-    FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCL.CUSTOMER;
+    FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCL.CUSTOMER
+    LIMIT 1000;
 
-    /* Capture pipeline execution completion time */
+    /* Capture completion timestamp */
     END_TIME := CURRENT_TIMESTAMP();
 
     RETURN 'Data copy has been successfully done!! Start Time: ' || :START_TIME || ' | End Time: ' || :END_TIME;
 END;
+
+
+
+CALL ASHISH.PUBLIC.SP_LOAD_STAGE_CUSTOMER();
