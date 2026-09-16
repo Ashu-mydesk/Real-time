@@ -1,0 +1,74 @@
+CREATE OR REPLACE PROCEDURE ASHISH.PUBLIC.SP_LOAD_STAGE_CUSTOMER()
+RETURNS VARCHAR
+LANGUAGE SQL
+EXECUTE AS OWNER
+AS
+DECLARE
+    START_TIME TIMESTAMP;
+    END_TIME TIMESTAMP;
+    SOURCE_TABLE_NAME VARCHAR(100);
+    TARGET_TABLE_NAME VARCHAR(100);
+    /* DIM CUSTOMER STORED PROCEDURE */
+    /* CREATED BY : ASHISH */
+    /* CREATED DATE : 16-09-2026 */
+BEGIN
+    /* Capture pipeline execution start time */
+    START_TIME := CURRENT_TIMESTAMP();
+    SOURCE_TABLE_NAME := 'SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCL.CUSTOMER';
+    TARGET_TABLE_NAME := 'ASHISH.PUBLIC.STAGE_CUSTOMER';
+
+    /* truncate the table before inserts the data into table */
+    LET Q_DELETE := 'TRUNCATE TABLE ' || :TARGET_TABLE_NAME;
+    EXECUTE IMMEDIATE Q_DELETE;
+
+    /* Insert the data into table from the source */
+    INSERT INTO ASHISH.PUBLIC.STAGE_CUSTOMER (
+        CUSTOMER_SK,
+        CUSTOMER_ID,
+        CURRENT_CDEMO_SK,
+        CURRENT_HDEMO_SK,
+        CURRENT_ADDR_SK,
+        FIRST_SHIPTO_DATE_SK,
+        FIRST_SALES_DATE_SK,
+        SALUTATION,
+        FIRST_NAME,
+        LAST_NAME,
+        PREFERRED_CUST_FLAG,
+        BIRTH_DAY,
+        BIRTH_MONTH,
+        BIRTH_YEAR,
+        BIRTH_COUNTRY,
+        LOGIN,
+        EMAIL_ADDRESS,
+        LAST_REVIEW_DATE,
+        LOAD_START_TIME,
+        LOAD_END_TIME
+    )
+    SELECT 
+        C_CUSTOMER_SK           AS CUSTOMER_SK,
+        C_CUSTOMER_ID           AS CUSTOMER_ID,
+        C_CURRENT_CDEMO_SK      AS CUSTOMER_CDEMO_SK,
+        C_CURRENT_HDEMO_SK      AS CURRENT_HDEMO_SK,
+        C_CURRENT_ADDR_SK       AS CURRENT_ADDR_SK,
+        C_FIRST_SHIPTO_DATE_SK  AS FIRST_SHIPTO_DATE_SK,
+        C_FIRST_SALES_DATE_SK   AS FIRST_SALES_DATE_SK,
+        C_SALUTATION            AS SALUTATION,
+        C_FIRST_NAME            AS FIRST_NAME,
+        C_LAST_NAME             AS LAST_NAME,
+        C_PREFERRED_CUST_FLAG   AS PREFERRED_CUST_FLAG,
+        C_BIRTH_DAY             AS BIRTH_DAY,
+        C_BIRTH_MONTH           AS BIRTH_MONTH,
+        C_BIRTH_YEAR            AS BIRTH_YEAR,
+        C_BIRTH_COUNTRY         AS BIRTH_COUNTRY,
+        C_LOGIN                 AS LOGIN,
+        C_EMAIL_ADDRESS         AS EMAIL_ADDRESS,
+        C_LAST_REVIEW_DATE      AS LAST_REVIEW_DATE,
+        :START_TIME             AS LOAD_START_TIME,
+        CURRENT_TIMESTAMP()     AS LOAD_END_TIME
+    FROM SNOWFLAKE_SAMPLE_DATA.TPCDS_SF10TCL.CUSTOMER;
+
+    /* Capture pipeline execution completion time */
+    END_TIME := CURRENT_TIMESTAMP();
+
+    RETURN 'Data copy has been successfully done!! Start Time: ' || :START_TIME || ' | End Time: ' || :END_TIME;
+END;
